@@ -1,8 +1,9 @@
 self.importScripts('https://unpkg.com/idb-keyval@2.3.0/dist/idb-keyval-min.js')
 
-var contentTypeHeader = new Headers({'Content-Type': 'application/json'})
-var CACHE_NAME = 't-rex-cache-v1';
-var urlsToCache = [
+const contentTypeHeader = new Headers({'Content-Type': 'application/json'})
+const CACHE_NAME = 't-rex-cache-v1';
+const cactusIds = ['70369520-e9bb-4895-9d7e-c32a64df3db3', 'f8b69c6b-74f0-40f9-916f-c5293f27fe10'];
+const urlsToCache = [
   // caches all files in t-rex-vr
   '/',
   // caches all external files/ libraries
@@ -14,16 +15,26 @@ var urlsToCache = [
 
 self.addEventListener('install', function(event) {
   // Perform install steps
-    event.waitUntil(
-      caches.open(CACHE_NAME)
-        .then(function(cache) {
-          console.log('Opened cache');
-          return cache.addAll(urlsToCache);
-        })
-        .catch(function(err){
-          console.log('Could not cache files\n', err)
-        })
-    );
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(function(cache) {
+        console.log('Opened cache');
+        // cache GET requests
+        return cache.addAll(urlsToCache)
+      })
+      .then(function() {
+        // and POST requests
+        for (i = 0; i < cactusIds.length; i++) {
+          let cactusId = cactusIds[i]
+          let requestBody = {'jsonrpc':'2.0','method':'Product.read','params':{'resourceId':`${cactusId}`},'id':'770f67da-4be0-47fd-bb37-e9b8c45949f9'}
+          let request = new Request('https://spaces.archilogic.com/api/v2', {method: 'POST', body: JSON.stringify(requestBody), headers: contentTypeHeader})
+          return cacheProductRequest(cactusId, requestBody.id, request)
+        }
+      })
+      .catch(function(err){
+        console.log('Could not cache files\n', err)
+      })
+  );
 });
 
 self.addEventListener('fetch', function(event) {
@@ -50,26 +61,7 @@ self.addEventListener('fetch', function(event) {
 
             // furniture requests - let's cache them!
             if (jsonRpcRequest.method == 'Product.read') {
-              var productId = jsonRpcRequest.params.resourceId
-
-              // check if the product is already in the IndexedDB
-              return idbKeyval.get(productId).then(function (storedValue) {
-                if (storedValue) {
-                  // need to update id in the response for the 3dio.js to be able to match request and response
-                  storedValue.id = jsonRpcRequest.id
-                  return new Response(new Blob([JSON.stringify(storedValue)], { contentType: "application/json" }), { headers: contentTypeHeader })
-                }
-
-                // if not, let's fetch the product and save it
-                console.log('Stored value NOT found!')
-                return fetch(fetchRequest.clone())
-                  .then(function (response) { return response.json() })
-                  .then(function (product) {
-                    idbKeyval.set(productId, product)
-                    console.log('Product stored')
-                    return new Response(new Blob([JSON.stringify(product)], {contentType: "application/json"}), {headers: contentTypeHeader})
-                  })
-              })
+              return cacheProductRequest(jsonRpcRequest.params.resourceId, jsonRpcRequest.id, fetchRequest.clone())
             } else {
               // TODO potentially cache?
               return fetch(fetchRequest)
@@ -80,7 +72,6 @@ self.addEventListener('fetch', function(event) {
         return fetch(fetchRequest).then(
           function(response) {
             // Check if we received a valid response
-
             if (!response || response.status !== 200 ) {
               return response;
             }
@@ -107,3 +98,23 @@ self.addEventListener('fetch', function(event) {
     );
 });
 
+function cacheProductRequest(productId, requestId, request) {
+  // check if the product is already in the IndexedDB
+  return idbKeyval.get(productId).then(function (storedValue) {
+    if (storedValue) {
+      // need to update id in the response for the 3dio.js to be able to match request and response
+      storedValue.id = requestId
+      return new Response(new Blob([JSON.stringify(storedValue)], { contentType: "application/json" }), { headers: contentTypeHeader })
+    }
+
+    // if not, let's fetch the product and save it
+    console.log('Stored value NOT found!')
+    return fetch(request)
+      .then(function (response) { return response.json() })
+      .then(function (product) {
+        idbKeyval.set(productId, product)
+        console.log('Product stored')
+        return new Response(new Blob([JSON.stringify(product)], {contentType: "application/json"}), {headers: contentTypeHeader})
+      })
+  })
+}
