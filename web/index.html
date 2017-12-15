@@ -15,29 +15,26 @@
     <a-assets>
       <img id="imgGround" src="https://ucarecdn.com/d86697ef-c9b9-4b74-912b-6e332adc80cd/"/>
     </a-assets>
+
     <a-cylinder position="0 0 0" radius="50" height="0.1" material="src:#imgGround; repeat: 20 20"></a-cylinder>
+
     <a-entity>
       <a-entity id="elephant" io3d-furniture="id: 0b5f9e5e-0ac4-40b1-92f3-07ef52d17f33" position="0 0 -40" rotation="0 85 0" scale="12 12 12">
-        <a-animation id="t-rex-wobble"
-          attribute="rotation" dur="200" direction="alternate"
-          to="0 95 -10" repeat="indefinite"></a-animation>
+        <a-animation id="wobble" attribute="rotation" dur="200" direction="alternate" to="0 95 -10" repeat="indefinite"></a-animation>
       </a-entity>
-      <a-animation
-        attribute="rotation" dur="20000" direction="forward"
-        to="0 -360 0" repeat="indefinite"  easing="linear"></a-animation>
+      <a-animation attribute="rotation" dur="20000" direction="forward" to="0 -360 0" repeat="indefinite" easing="linear"></a-animation>
     </a-entity>
 
     <a-gradient-sky material="shader: gradient; topColor: 163 233 248; bottomColor: 230 191 140;"></a-gradient-sky>
+
     <a-entity id="remote" tracked-controls="idPrefix: Daydream Controller" daydream-controls></a-entity>
   </a-scene>
+
   <template id="jumpAnimation">
-    <a-animation
-      attribute="position" dur="200" from="0 18 -40" to="0 0 -40" easing="linear"
-      delay="1000"></a-animation>
-    <a-animation
-      attribute="position" dur="200" to="0 18 -40" easing="linear"></a-animation>
+    <a-animation class="up" attribute="position" dur="200" to="0 18 -40" easing="linear"></a-animation>
+    <a-animation class="down" attribute="position" dur="200" from="0 18 -40" to="0 0 -40" easing="linear" delay="1000"></a-animation>
   </template>
+
   <script src="index.js"></script>
-  <script>addCacti()</script>
 </body>
 </html>
