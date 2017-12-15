@@ -1,6 +1,6 @@
 self.importScripts('https://unpkg.com/idb-keyval@2.3.0/dist/idb-keyval-min.js')
 
-const contentTypeHeader = new Headers({'Content-Type': 'application/json'})
+const contentTypeHeader = new Headers({ 'Content-Type': 'application/json' })
 const CACHE_NAME = 't-rex-cache-v1';
 const cactusIds = ['70369520-e9bb-4895-9d7e-c32a64df3db3', 'f8b69c6b-74f0-40f9-916f-c5293f27fe10'];
 const urlsToCache = [
@@ -26,8 +26,8 @@ self.addEventListener('install', function(event) {
         // and POST requests
         for (i = 0; i < cactusIds.length; i++) {
           let cactusId = cactusIds[i]
-          let requestBody = {'jsonrpc':'2.0','method':'Product.read','params':{'resourceId':`${cactusId}`},'id':'770f67da-4be0-47fd-bb37-e9b8c45949f9'}
-          let request = new Request('https://spaces.archilogic.com/api/v2', {method: 'POST', body: JSON.stringify(requestBody), headers: contentTypeHeader})
+          let requestBody = { 'jsonrpc': '2.0', 'method': 'Product.read', 'params': { 'resourceId': cactusId }, 'id': '770f67da-4be0-47fd-bb37-e9b8c45949f9' }
+          let request = new Request('https://spaces.archilogic.com/api/v2', { method: 'POST', body: JSON.stringify(requestBody), headers: contentTypeHeader })
           return cacheProductRequest(cactusId, requestBody.id, request)
         }
       })
@@ -104,7 +104,7 @@ function cacheProductRequest(productId, requestId, request) {
     if (storedValue) {
       // need to update id in the response for the 3dio.js to be able to match request and response
       storedValue.id = requestId
-      return new Response(new Blob([JSON.stringify(storedValue)], { contentType: "application/json" }), { headers: contentTypeHeader })
+      return new Response(new Blob([JSON.stringify(storedValue)]), { headers: contentTypeHeader })
     }
 
     // if not, let's fetch the product and save it
@@ -114,7 +114,7 @@ function cacheProductRequest(productId, requestId, request) {
       .then(function (product) {
         idbKeyval.set(productId, product)
         console.log('Product stored')
-        return new Response(new Blob([JSON.stringify(product)], {contentType: "application/json"}), {headers: contentTypeHeader})
+        return new Response(new Blob([JSON.stringify(product)]), { headers: contentTypeHeader })
       })
   })
 }
